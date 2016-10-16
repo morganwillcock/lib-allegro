@@ -36,7 +36,7 @@
 
 
 /* general */
-static HWND allegro_wnd = NULL;
+HWND allegro_wnd = NULL;
 char wnd_title[WND_TITLE_SIZE];  /* ASCII string */
 int wnd_x = 0;
 int wnd_y = 0;
