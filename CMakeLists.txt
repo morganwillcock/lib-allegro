@@ -673,6 +673,12 @@ if(PSP)
     m pspaudio pspgu psprtc pspdebug pspdisplay pspge pspctrl pspsdk c pspnet pspnet_inet pspnet_resolver psputility pspuser pspkernel)
 endif(PSP)
 
+# -- Android --
+
+if(ANDROID)
+	list(APPEND PLATFORM_SOURCES ${ALLEGRO_SRC_ANDROID_FILES})
+endif(ANDROID)
+
 #-----------------------------------------------------------------------------#
 #
 # Generate and install headers
