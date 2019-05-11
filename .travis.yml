@@ -11,17 +11,34 @@ addons:
       - libjack-dev
       - libsdl2-dev
 
+env:
+  - BUILD_TYPE=debug
+    SHARED=on
+  - BUILD_TYPE=debug
+    SHARED=off
+  - BUILD_TYPE=release
+    SHARED=on
+  - BUILD_TYPE=release
+    SHARED=off
+
+before_script:
+  - |
+    filename=lib-allegro_$BUILD_TYPE
+    [ "$SHARED" = "off" ] && filename=${filename}_static
+    export filename
+
 script:
-  - mkdir build-liballegro
-  - cd build-liballegro
-  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - mkdir build_$filename
+  - cd build_$filename
+  - cmake -DSHARED=$SHARED -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
   - make
-  - tar -zcf lib-allegro.tar.gz include/ lib/
+  - tar -cvzf $filename.tar.gz include/ lib/
 
 deploy:
   provider: releases
   skip_cleanup: true
   api_key: $GITHUB_TOKEN
-  file: lib-allegro.tar.gz
+  file_glob: true
+  file: lib-allegro_*.tar.gz
   on:
     tags: true
