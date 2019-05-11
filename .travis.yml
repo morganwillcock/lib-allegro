@@ -5,6 +5,8 @@ addons:
   apt:
     packages:
       - cmake
+      - libasound2-dev
+      - libjack-dev
 script:
 - mkdir build-liballegro
 - cd build-liballegro
