@@ -4,19 +4,11 @@ compiler:
 addons:
   apt:
     packages:
-    - build-essential
-    - pkg-config 
-    - cmake 
-    - libfreetype6-dev 
-    - libogg-dev 
-    - libtheora-dev 
-    - libvorbis-dev
-    - liballegro4-dev
-    - libaldmb1-dev
+      - cmake
 script:
 - mkdir build-liballegro
 - cd build-liballegro
-- cmake -D SHARED=off -DCMAKE_BUILD_TYPE=Debug ..
+- cmake -DCMAKE_BUILD_TYPE=Debug ..
 - make
 - tar -zcf lib-allegro.tar.gz include/ lib/
 deploy:
