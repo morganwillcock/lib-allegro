@@ -1,6 +1,8 @@
 language: c
+
 compiler:
   - gcc
+
 addons:
   apt:
     packages:
@@ -8,12 +10,14 @@ addons:
       - libasound2-dev
       - libjack-dev
       - libsdl2-dev
+
 script:
-- mkdir build-liballegro
-- cd build-liballegro
-- cmake -DCMAKE_BUILD_TYPE=Debug ..
-- make
-- tar -zcf lib-allegro.tar.gz include/ lib/
+  - mkdir build-liballegro
+  - cd build-liballegro
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - make
+  - tar -zcf lib-allegro.tar.gz include/ lib/
+
 deploy:
   provider: releases
   skip_cleanup: true
