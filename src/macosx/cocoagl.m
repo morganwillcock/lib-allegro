@@ -458,12 +458,13 @@ struct MyVertex {
 
     switch (_colourDepth) {
         case 16:
-            _osx_texture_format = GL_BGR;
+            _osx_texture_format = GL_RGB;
             _osx_texture_storage = GL_UNSIGNED_SHORT_5_6_5;
             break;
         case 32:
+            // this is ARGB, note the REV in storage which means bytes are reversed
             _osx_texture_format = GL_BGRA;
-            _osx_texture_storage = GL_UNSIGNED_BYTE;
+            _osx_texture_storage = GL_UNSIGNED_INT_8_8_8_8_REV;
             break;
         default:
             TRACE(PREFIX_I "unsupported color depth\n");
