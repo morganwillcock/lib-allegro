@@ -16,6 +16,10 @@
 build_release_linux_task:
   container:
     dockerfile: ci/linux/Dockerfile
+    docker_arguments:
+      matrix:
+        - FROM_DEBIAN: debian:jessie
+        - FROM_DEBIAN: i386/debian:jessie
   env:
     matrix:
       - BUILD_TYPE: debug
@@ -29,5 +33,6 @@ build_release_linux_task:
   build_script: |
     filename=lib-allegro_$BUILD_TYPE
     [ "$SHARED" = "off" ] && filename=${filename}_static
+    filename=${filename}_$(dpkg --print-architecture)
     mkdir build_$filename && cd build_$filename
     cmake -DSHARED=$SHARED -DCMAKE_BUILD_TYPE=$BUILD_TYPE .. && make
