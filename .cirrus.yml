@@ -1,14 +1,33 @@
-build_release_task:
-  windows_container:
-    dockerfile: ci/windows/Dockerfile
-    os_version: 2019
+#build_release_windows_task:
+#  windows_container:
+#    dockerfile: ci/windows/Dockerfile
+#    os_version: 2019
+#  env:
+#    matrix:
+#      - ALLEGRO_CONFIG: Release MD
+#      - ALLEGRO_CONFIG: Release MT
+#      - ALLEGRO_CONFIG: Debug MD
+#      - ALLEGRO_CONFIG: Debug MT
+#  build_script: >
+#    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 &&
+#    pushd build\vs2015 &&
+#    msbuild ALLEGRO.sln /p:PlatformToolset=v140 /p:Configuration="%ALLEGRO_CONFIG%" /p:Platform=Win32 /maxcpucount /nologo
+
+build_release_linux_task:
+  container:
+    dockerfile: ci/linux/Dockerfile
   env:
     matrix:
-      - ALLEGRO_CONFIG: Release MD
-      - ALLEGRO_CONFIG: Release MT
-      - ALLEGRO_CONFIG: Debug MD
-      - ALLEGRO_CONFIG: Debug MT
-  build_script: >
-    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 &&
-    pushd build\vs2015 &&
-    msbuild ALLEGRO.sln /p:PlatformToolset=v140 /p:Configuration="%ALLEGRO_CONFIG%" /p:Platform=Win32 /maxcpucount /nologo
+      - BUILD_TYPE: debug
+        SHARED: on
+      - BUILD_TYPE: debug
+        SHARED: off
+      - BUILD_TYPE: release
+        SHARED: on
+      - BUILD_TYPE: release
+        SHARED: off
+  build_script: |
+    filename=lib-allegro_$BUILD_TYPE
+    [ "$SHARED" = "off" ] && filename=${filename}_static
+    mkdir build_$filename && cd build_$filename
+    cmake -DSHARED=$SHARED -DCMAKE_BUILD_TYPE=$BUILD_TYPE .. && make
