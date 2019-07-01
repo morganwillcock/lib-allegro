@@ -1,19 +1,21 @@
-#build_release_windows_task:
-#  windows_container:
-#    dockerfile: ci/windows/Dockerfile
-#    os_version: 2019
-#  env:
-#    matrix:
-#      - ALLEGRO_CONFIG: Release MD
-#      - ALLEGRO_CONFIG: Release MT
-#      - ALLEGRO_CONFIG: Debug MD
-#      - ALLEGRO_CONFIG: Debug MT
-#  build_script: >
-#    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 &&
-#    pushd build\vs2015 &&
-#    msbuild ALLEGRO.sln /p:PlatformToolset=v140 /p:Configuration="%ALLEGRO_CONFIG%" /p:Platform=Win32 /maxcpucount /nologo
+build_windows_task:
+  windows_container:
+    dockerfile: ci/windows/Dockerfile
+    os_version: 2019
+  env:
+    matrix:
+      - BUILD_CONFIG: Release MD
+      - BUILD_CONFIG: Release MT
+      - BUILD_CONFIG: Debug MD
+      - BUILD_CONFIG: Debug MT
+  build_script: >
+    "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 &&
+    pushd build\vs2015 &&
+    msbuild ALLEGRO.sln /p:PlatformToolset=v140 /p:Configuration="%BUILD_CONFIG%" /p:Platform=Win32 /maxcpucount /nologo
+  binaries_artifacts:
+    path: build/VS2015/lib/alleg-*.lib
 
-build_release_linux_task:
+build_linux_task:
   container:
     dockerfile: ci/linux/Dockerfile
     docker_arguments:
@@ -36,3 +38,8 @@ build_release_linux_task:
     filename=${filename}_$(dpkg --print-architecture)
     mkdir build_$filename && cd build_$filename
     cmake -DSHARED=$SHARED -DCMAKE_BUILD_TYPE=$BUILD_TYPE .. && make
+  archive_script: |
+    filename=$(echo build_lib-allegro_*)
+    cd $filename && tar -cvzf $CIRRUS_WORKING_DIR/${filename#build_}.tar.gz include/ lib/
+  binaries_artifacts:
+    path: lib-allegro_*.tar.gz
