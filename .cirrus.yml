@@ -12,6 +12,10 @@ build_windows_task:
     "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 &&
     pushd build\vs2015 &&
     msbuild ALLEGRO.sln /p:PlatformToolset=v140 /p:Configuration="%BUILD_CONFIG%" /p:Platform=Win32 /maxcpucount /nologo
+  cachehost_script: >
+    %COMSPEC% /c "if defined CIRRUS_RELEASE
+    forfiles /P build\VS2015\lib /M alleg-*.lib /C
+    "curl -s -X POST --data-binary @@path http://%CIRRUS_HTTP_CACHE_HOST%/%CIRRUS_RELEASE%_@file""
   binaries_artifacts:
     path: build/VS2015/lib/alleg-*.lib
 
@@ -41,5 +45,44 @@ build_linux_task:
   archive_script: |
     filename=$(echo build_lib-allegro_*)
     cd $filename && tar -cvzf $CIRRUS_WORKING_DIR/${filename#build_}.tar.gz include/ lib/
+  cachehost_script: |
+    if [ -n "$CIRRUS_RELEASE" ]; then
+      filename=$(echo build_lib-allegro_*)
+      curl -s -X POST --data-binary @${filename#build_}.tar.gz http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_${filename#build_}.tar.gz
+    fi
   binaries_artifacts:
     path: lib-allegro_*.tar.gz
+
+upload_release_task:
+  only_if: $CIRRUS_RELEASE != ''
+  depends_on:
+    - build_windows
+    - build_linux
+  env:
+    GITHUB_TOKEN: ENCRYPTED[299799ab57de29b0c87542c625013a262bcbb44a5538bba5ebb40d1b5728f8cf9148e2cf99e750a0991f7bf53142b85c]
+  freebsd_instance:
+    image: freebsd-12-0-release-amd64
+  cachehost_script: |
+    mkdir github_release && cd github_release
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_debug_amd64.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_debug_i386.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_debug_static_amd64.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_debug_static_i386.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_release_amd64.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_release_i386.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_release_static_amd64.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_lib-allegro_release_static_i386.tar.gz
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_alleg_debug_static.lib
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_alleg_debug_static-mt.lib
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_alleg_static.lib
+    curl -fLOJ http://$CIRRUS_HTTP_CACHE_HOST/${CIRRUS_RELEASE}_alleg_static-mt.lib
+  release_script: |
+    for fpath in github_release/*
+    do
+      echo Uploading $fpath
+      curl -X POST \
+        --data-binary @$fpath \
+        --header "Authorization: token $GITHUB_TOKEN" \
+        --header "Content-Type: application/octet-stream" \
+        "https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_RELEASE/assets?name=${fpath##*/}"
+    done
