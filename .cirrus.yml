@@ -1,4 +1,10 @@
 build_windows_task:
+  matrix:
+    - name: build_windows
+      only_if: $CIRRUS_RELEASE == ''
+    - name: build_windows_release
+      only_if: $CIRRUS_RELEASE != ''
+      auto_cancellation: true
   windows_container:
     dockerfile: ci/windows/Dockerfile
     os_version: 2019
@@ -16,6 +22,12 @@ build_windows_task:
     path: build/VS2015/lib/alleg-*.lib
 
 build_linux_task:
+  matrix:
+    - name: build_linux
+      only_if: $CIRRUS_RELEASE == ''
+    - name: build_linux_release
+      only_if: $CIRRUS_RELEASE != ''
+      auto_cancellation: true
   container:
     dockerfile: ci/linux/Dockerfile
     docker_arguments:
@@ -43,3 +55,29 @@ build_linux_task:
     cd $filename && tar -cvzf $CIRRUS_WORKING_DIR/${filename#build_}.tar.gz include/ lib/
   binaries_artifacts:
     path: lib-allegro_*.tar.gz
+
+upload_release_task:
+  only_if: $CIRRUS_RELEASE != ''
+  auto_cancellation: true
+  depends_on:
+    - build_windows_release
+    - build_linux_release
+  env:
+    GITHUB_TOKEN: ENCRYPTED[299799ab57de29b0c87542c625013a262bcbb44a5538bba5ebb40d1b5728f8cf9148e2cf99e750a0991f7bf53142b85c]
+  freebsd_instance:
+    image: freebsd-12-0-release-amd64
+  release_script: |
+    mkdir github_release
+    win_url=https://api.cirrus-ci.com/v1/artifact/github/$CIRRUS_REPO_FULL_NAME/build_windows_release/binaries.zip?branch=$CIRRUS_BRANCH
+    curl -fLsS "$win_url" | tar -f - -xvzC github_release -s '|.*/||p'
+    linux_url=https://api.cirrus-ci.com/v1/artifact/github/$CIRRUS_REPO_FULL_NAME/build_linux_release/binaries.zip?branch=$CIRRUS_BRANCH
+    curl -fLsS "$linux_url" | tar -f - -xvzC github_release
+    for fpath in github_release/*
+    do
+      echo Uploading $fpath
+      curl -X POST \
+        --data-binary @$fpath \
+        --header "Authorization: token $GITHUB_TOKEN" \
+        --header "Content-Type: application/octet-stream" \
+        "https://uploads.github.com/repos/$CIRRUS_REPO_FULL_NAME/releases/$CIRRUS_RELEASE/assets?name=${fpath##*/}"
+    done
