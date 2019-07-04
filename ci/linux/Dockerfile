@@ -14,10 +14,11 @@ APT::Get::Install-Suggests "false";\n' > /etc/apt/apt.conf.d/$APT_CONF_LOCAL
 # Upgrade existing packages
 RUN apt-get update && apt-get upgrade
 
-# Get build dependencies
+# Get build dependencies plus curl
 RUN apt-get install \
   build-essential \
   cmake \
+  curl \
   git \
   libasound2-dev \
   libjack-dev \
