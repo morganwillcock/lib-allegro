@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # Configure apt defaults
 ARG APT_CONF_LOCAL=99local
 RUN mkdir -p /etc/apt/apt.conf.d && \
-printf 'APT::Get::Assume-Yes "true";\n\
+  printf 'APT::Get::Assume-Yes "true";\n\
 APT::Get::Install-Recommends "false";\n\
 APT::Get::Install-Suggests "false";\n' > /etc/apt/apt.conf.d/$APT_CONF_LOCAL
 
@@ -21,4 +21,4 @@ RUN apt-get install \
   git \
   libasound2-dev \
   libjack-dev \
-  libsdl2-dev \
+  libsdl2-dev
