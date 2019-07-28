@@ -37,7 +37,20 @@ build_linux_task:
     [ "$SHARED" = "off" ] && filename=${filename}_static
     filename=${filename}_$(dpkg --print-architecture)
     mkdir build_$filename && cd build_$filename
-    cmake -DSHARED=$SHARED -DCMAKE_BUILD_TYPE=$BUILD_TYPE .. && make
+    cmake -DSHARED=$SHARED \
+      -DWANT_MODULES=ON \
+      -DWANT_ALSA=ON \
+      -DWANT_JACK=OFF \
+      -DWANT_SGIAUDIO=OFF \
+      -DWANT_LINUX_CONSOLE=OFF \
+      -DWANT_ALLEGROGL=ON \
+      -DWANT_LOADPNG=ON \
+      -DWANT_LOGG=ON \
+      -DWANT_JPGALLEG=ON \
+      -DWANT_TOOLS=ON \
+      -DWANT_EXAMPLES=OFF \
+      -DWANT_TESTS=ON \
+      -DCMAKE_BUILD_TYPE=$BUILD_TYPE .. && make
   archive_script: |
     filename=$(echo build_lib-allegro_*)
     cd $filename && tar -cvzf $CIRRUS_WORKING_DIR/${filename#build_}.tar.gz include/ lib/
